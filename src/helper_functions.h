@@ -109,6 +109,16 @@ inline bool read_map_data(std::string filename, Map& map) {
 	return true;
 }
 
+/**
+ * Print map data in id_i, landmark_x_f, landmark_y_f
+ * @param map
+ */
+inline void print_map_data(Map& map) {
+  for (auto i = 0; i < map.landmark_list.size(); i+=1) {
+    cout << "i: " << map.landmark_list[i].id_i << endl;
+  }
+}
+
 /* Reads control data from a file.
  * @param filename Name of file containing control measurements.
  * @output True if opening and reading file was successful
