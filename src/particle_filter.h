@@ -24,8 +24,6 @@ struct Particle {
 	std::vector<double> sense_y;
 };
 
-
-
 class ParticleFilter {
 	
 	// Number of particles to draw
@@ -116,19 +114,23 @@ public:
 
 	/**
 	 * Predict particle location based on linear (yaw_rate = 0)
-	 * model
-	 * @param x0
-	 * @param y0
-	 * @param yaw
-	 * @param v
-	 * @param dt
-	 * @param particle update particle 2D (x, y) location
+	 * motion model
+	 * @param yaw theta at t0
+	 * @param v velocity at t0
+	 * @param dt t1 - t0
+	 * @param particle
 	 */
-  void progressParticleLinearMotion(double x_0, double y_0, double yaw,
-																 double v, double dt, Particle* particle);
+  void linearMotionParticleProgress(Particle* particle, const double v, const double dt);
 
-	void progressParticleNonlinearMotion(double x_0, double y_0, double yaw_0,
-																	double yawrate, double v, double dt, Particle* particle);
+	/**
+	 * Predict particle location based on nonlinear (yaw_rate != 0)
+	 * motion model
+	 * @param yaw theta at t0
+	 * @param v velocity at t0
+	 * @param dt t1 - t0
+	 * @param particle
+	 */
+	void nonLinearMotionParticleProgress(Particle* particle, const double v, const double dt, const double yaw_rate);
 };
 
 

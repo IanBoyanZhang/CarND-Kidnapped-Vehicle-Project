@@ -25,9 +25,6 @@ void ParticleFilter::init(double x, double y, double theta, double std[]) {
 	// Add random Gaussian noise to each particle.
 	// NOTE: Consult particle_filter.h for more information about this method (and others in this file).
 
-  /**************************************************
-   * Step 1: Setting up # of particles
-   **************************************************/
 	num_particles = 1000;
 	for (auto i = 0; i < num_particles; i+=1) {
 		weights.push_back(1);
@@ -61,11 +58,16 @@ void ParticleFilter::prediction(double delta_t, double std_pos[], double velocit
 	//  http://en.cppreference.com/w/cpp/numeric/random/normal_distribution
 	//  http://www.cplusplus.com/reference/random/default_random_engine/
 
-	// based on motion model
-	if (yaw_rate == 0) {
-
-	} else {
-
+	/**
+	 * How to write this in lambda function and callback style,
+	 * though it may be detrimental to runtime efficiency?
+	 */
+	for (auto i = 0; i < num_particles; i+=1) {
+		if (yaw_rate == 0) {
+			linearMotionParticleProgress(&particles[i], velocity, delta_t);
+			continue;
+		}
+		nonLinearMotionParticleProgress(&particles[i], velocity, delta_t, yaw_rate);
 	}
 }
 
@@ -148,8 +150,11 @@ string ParticleFilter::getSenseY(Particle best)
     return s;
 }
 
-void ParticleFilter::progressParticleLinearMotion(double x_0, double y_0, double yaw_0,
-																							 double v, double dt, Particle* particle) {
+void ParticleFilter::linearMotionParticleProgress(Particle *particle, const double v, const double dt) {
+	double x_0 = particle->x;
+	double y_0 = particle->y;
+  double yaw_0 = particle->theta;
+
 	double x_f = x_0 + v * dt * cos(yaw_0);
 	double y_f = y_0 + v * dt * sin(yaw_0);
 
@@ -157,13 +162,19 @@ void ParticleFilter::progressParticleLinearMotion(double x_0, double y_0, double
   particle->y = y_f;
 }
 
-void ParticleFilter::progressParticleNonlinearMotion(double x_0, double y_0, double yaw_0, double yawrate, double v,
-																										 double dt, Particle *particle) {
-  double yaw_f = yaw_0 + yawrate * dt;
-	double x_f = x_0 + v / yawrate * (sin(yaw_f) - sin(yaw_0));
-	double y_f = y_0 + v / yawrate * (cos(yaw_0) - cos(yaw_f));
+void ParticleFilter::nonLinearMotionParticleProgress(Particle *particle, const double v,
+																										 const double dt, const double yaw_rate) {
+  double x_0 = particle->x;
+	double y_0 = particle->y;
+  double yaw_0 = particle->theta;
+
+  double yaw_f = yaw_0 + yaw_rate * dt;
+	double x_f = x_0 + v / yaw_rate * (sin(yaw_f) - sin(yaw_0));
+	double y_f = y_0 + v / yaw_rate * (cos(yaw_0) - cos(yaw_f));
 
 	particle->x = x_f;
 	particle->y = y_f;
 	particle->theta = yaw_f;
 }
+
+
