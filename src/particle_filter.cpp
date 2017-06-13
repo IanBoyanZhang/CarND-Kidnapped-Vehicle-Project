@@ -5,7 +5,6 @@
  *      Author: Tiffany Huang
  */
 
-#include <random>
 #include <algorithm>
 #include <iostream>
 #include <numeric>
@@ -34,20 +33,13 @@ void ParticleFilter::init(double x, double y, double theta, double std[]) {
 	double std_y = std[1];
 	double std_theta = std[2];
 
-	default_random_engine gen;
-
-	// Creates a normal (Gaussian) distribution
-	normal_distribution<double> dist_x(x, std_x);
-	normal_distribution<double> dist_y(y, std_y);
-	normal_distribution<double> dist_psi(theta, std_theta);
-
 	// Initialize all particles to first position
   for (auto i = 0; i < num_particles; i+=1) {
 		Particle particle;
 		particle.id = i;
-		particle.x = dist_x(gen);
-		particle.y = dist_y(gen);
-		particle.theta = dist_psi(gen);
+		particle.x = generateGaussianVariable(x, std_x);
+		particle.y = generateGaussianVariable(y, std_y);
+		particle.theta = generateGaussianVariable(theta, std_theta);
 		particles.push_back(particle);
 	}
 }
@@ -62,12 +54,29 @@ void ParticleFilter::prediction(double delta_t, double std_pos[], double velocit
 	 * How to write this in lambda function and callback style,
 	 * though it may be detrimental to runtime efficiency?
 	 */
+	/**
+	 * TODO: refactor duplicated code
+	 */
+	double std_x = std_pos[0];
+	double std_y = std_pos[1];
+	double std_theta = std_pos[2];
+
+	// TODO: Add gaussian noise to velocity and yaw_rate
 	for (auto i = 0; i < num_particles; i+=1) {
 		if (yaw_rate == 0) {
 			linearMotionParticleProgress(&particles[i], velocity, delta_t);
 			continue;
 		}
 		nonLinearMotionParticleProgress(&particles[i], velocity, delta_t, yaw_rate);
+	}
+
+	for (auto i = 0; i < num_particles; i+=1) {
+		Particle particle = particles[i];
+		particle.id = i;
+		particle.x = generateGaussianVariable(particle.x, std_x);
+		particle.y = generateGaussianVariable(particle.y, std_y);
+		particle.theta = generateGaussianVariable(particle.theta, std_theta);
+		particles[i] = particle;
 	}
 }
 
@@ -177,4 +186,10 @@ void ParticleFilter::nonLinearMotionParticleProgress(Particle *particle, const d
 	particle->theta = yaw_f;
 }
 
+double ParticleFilter::generateGaussianVariable(const double var_, const double std_) {
+	default_random_engine gen;
+	// Create a normal (gaussian distribution)
+  normal_distribution<double> dist_var(var_, std_);
+	return dist_var(gen);
+}
 

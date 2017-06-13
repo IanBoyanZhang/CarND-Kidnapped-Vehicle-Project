@@ -10,6 +10,7 @@
 #define PARTICLE_FILTER_H_
 
 #include "helper_functions.h"
+#include <random>
 #include <vector>
 
 struct Particle {
@@ -131,6 +132,8 @@ public:
 	 * @param particle
 	 */
 	void nonLinearMotionParticleProgress(Particle* particle, const double v, const double dt, const double yaw_rate);
+
+	double generateGaussianVariable(const double var_, const double std_);
 };
 
 
