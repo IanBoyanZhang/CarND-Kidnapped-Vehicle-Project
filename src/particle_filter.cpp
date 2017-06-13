@@ -56,6 +56,7 @@ void ParticleFilter::prediction(double delta_t, double std_pos[], double velocit
 	 */
 	/**
 	 * TODO: refactor duplicated code
+	 * TODO: Cache random number generator?
 	 */
 	double std_x = std_pos[0];
 	double std_y = std_pos[1];
@@ -103,6 +104,22 @@ void ParticleFilter::updateWeights(double sensor_range, double std_landmark[],
 
 
 	// You would need to normalize the weights for calculations
+
+	// TODO: sensor_range for filtering
+	// Time complexity M (#_of_particles) * N (#_of_observations)
+	LandmarkObs l;
+  Particle p;
+	unsigned int obs_len = observations.size();
+  for (auto i = 0; i < num_particles; i+=1) {
+		p = particles[i];
+		for (auto j = 0; j < obs_len; j+=1) {
+			l = observations[j];
+			// Coordinate transform
+			//   http://planning.cs.uiuc.edu/node99.html
+      p.sense_x.push_back(l.x * cos(p.theta) - l.y * sin(p.theta) + p.x);
+			p.sense_y.push_back(l.x * sin(p.theta) + l.y * sin(p.theta) + p.y);
+		}
+	}
 }
 
 void ParticleFilter::resample() {
