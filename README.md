@@ -132,3 +132,7 @@ The things the grading code is looking for are:
 2. **Performance**: your particle filter should complete execution within the time of 100 seconds.
 
 
+
+## Notes 
+
+[C++ Back inserter](http://www.cplusplus.com/reference/iterator/back_inserter/)
