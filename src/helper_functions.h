@@ -115,7 +115,9 @@ inline bool read_map_data(std::string filename, Map& map) {
  */
 inline void print_map_data(Map& map) {
   for (auto i = 0; i < map.landmark_list.size(); i+=1) {
-    cout << "i: " << map.landmark_list[i].id_i << endl;
+    std::cout << "i: " << map.landmark_list[i].id_i << " ";
+		std::cout << "x: " << map.landmark_list[i].x_f << " ";
+		std::cout << "y: " << map.landmark_list[i].y_f << " ";
   }
 }
 

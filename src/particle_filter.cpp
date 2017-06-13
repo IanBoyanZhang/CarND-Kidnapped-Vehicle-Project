@@ -61,6 +61,12 @@ void ParticleFilter::prediction(double delta_t, double std_pos[], double velocit
 	//  http://en.cppreference.com/w/cpp/numeric/random/normal_distribution
 	//  http://www.cplusplus.com/reference/random/default_random_engine/
 
+	// based on motion model
+	if (yaw_rate == 0) {
+
+	} else {
+
+	}
 }
 
 void ParticleFilter::dataAssociation(std::vector<LandmarkObs> predicted, std::vector<LandmarkObs>& observations) {
@@ -140,4 +146,24 @@ string ParticleFilter::getSenseY(Particle best)
     string s = ss.str();
     s = s.substr(0, s.length()-1);  // get rid of the trailing space
     return s;
+}
+
+void ParticleFilter::progressParticleLinearMotion(double x_0, double y_0, double yaw_0,
+																							 double v, double dt, Particle* particle) {
+	double x_f = x_0 + v * dt * cos(yaw_0);
+	double y_f = y_0 + v * dt * sin(yaw_0);
+
+	particle->x = x_f;
+  particle->y = y_f;
+}
+
+void ParticleFilter::progressParticleNonlinearMotion(double x_0, double y_0, double yaw_0, double yawrate, double v,
+																										 double dt, Particle *particle) {
+  double yaw_f = yaw_0 + yawrate * dt;
+	double x_f = x_0 + v / yawrate * (sin(yaw_f) - sin(yaw_0));
+	double y_f = y_0 + v / yawrate * (cos(yaw_0) - cos(yaw_f));
+
+	particle->x = x_f;
+	particle->y = y_f;
+	particle->theta = yaw_f;
 }

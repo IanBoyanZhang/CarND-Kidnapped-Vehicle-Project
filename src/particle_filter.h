@@ -10,6 +10,7 @@
 #define PARTICLE_FILTER_H_
 
 #include "helper_functions.h"
+#include <vector>
 
 struct Particle {
 
@@ -112,6 +113,22 @@ public:
 	const bool initialized() const {
 		return is_initialized;
 	}
+
+	/**
+	 * Predict particle location based on linear (yaw_rate = 0)
+	 * model
+	 * @param x0
+	 * @param y0
+	 * @param yaw
+	 * @param v
+	 * @param dt
+	 * @param particle update particle 2D (x, y) location
+	 */
+  void progressParticleLinearMotion(double x_0, double y_0, double yaw,
+																 double v, double dt, Particle* particle);
+
+	void progressParticleNonlinearMotion(double x_0, double y_0, double yaw_0,
+																	double yawrate, double v, double dt, Particle* particle);
 };
 
 
