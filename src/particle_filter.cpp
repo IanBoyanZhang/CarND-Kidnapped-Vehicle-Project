@@ -107,19 +107,36 @@ void ParticleFilter::updateWeights(double sensor_range, double std_landmark[],
 
 	// TODO: sensor_range for filtering
 	// Time complexity M (#_of_particles) * N (#_of_observations)
-	LandmarkObs l;
-  Particle p;
-	unsigned int obs_len = observations.size();
-  for (auto i = 0; i < num_particles; i+=1) {
-		p = particles[i];
-		for (auto j = 0; j < obs_len; j+=1) {
-			l = observations[j];
+	for (const auto& p: particles) {
+		for (const auto& l: map_landmarks.landmark_list) {
 			// Coordinate transform
 			//   http://planning.cs.uiuc.edu/node99.html
-      p.sense_x.push_back(l.x * cos(p.theta) - l.y * sin(p.theta) + p.x);
-			p.sense_y.push_back(l.x * sin(p.theta) + l.y * sin(p.theta) + p.y);
+      p.sense_x.push_back(l.x_f * cos(p.theta) - l.y_f * sin(p.theta) + p.x);
+			p.sense_y.push_back(l.x_f * sin(p.theta) + l.y_f * sin(p.theta) + p.y);
 		}
 	}
+
+	// calculate particle weight
+	const double std_x = std_landmark[0];
+	const double std_y = std_landmark[1];
+
+	const double scalar = 1.0/( 2.0 * M_PI * std_x * std_y);
+	const double dx_divider = 2.0*pow(std_x,2);
+	const double dy_divider = 2.0*pow(std_y,2);
+
+  vector<double> weights_;
+	// 2D Gaussian
+	for (auto& p:particles) {
+    p.weight = 1;
+		for (const auto& map_obs:observations) {
+			const double dx2 = pow(map_obs.x - p.sense_x[map_obs.id], 2);
+			const double dy2 = pow(map_obs.y - p.sense_y[map_obs.id], 2);
+			p.weight *= scalar*exp(-(dx2/dx_divider + dy2/dy_divider));
+		}
+		weights_.push_back(p.weight);
+	}
+
+	weights = weights_;
 }
 
 void ParticleFilter::resample() {

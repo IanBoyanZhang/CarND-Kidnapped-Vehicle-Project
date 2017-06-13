@@ -134,8 +134,6 @@ public:
 	void nonLinearMotionParticleProgress(Particle* particle, const double v, const double dt, const double yaw_rate);
 
 	double generateGaussianVariable(const double var_, const double std_);
-
-//  void Map2Car();
 };
 
 
