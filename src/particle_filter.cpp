@@ -102,7 +102,6 @@ void ParticleFilter::updateWeights(double sensor_range, double std_landmark[],
 	//   3.33
 	//   http://planning.cs.uiuc.edu/node99.html
 
-
 	// You would need to normalize the weights for calculations
 
 	// TODO: sensor_range for filtering
@@ -117,14 +116,17 @@ void ParticleFilter::updateWeights(double sensor_range, double std_landmark[],
 			// distance to observation
       // Factor below part into data association function?
 			double min = numeric_limits<double>::max();
+			// By default associate with first landmark
+			double min_id = 0;
 			double distance = 0;
 			for (const auto& l: map_landmarks.landmark_list) {
-				distance = dist(p.sense_x[o.id], p.sense_y[o.id], l.x_f, l.y_f);
+				/*distance = dist(p.sense_x[o.id], p.sense_y[o.id], l.x_f, l.y_f);*/
 				if (distance < min) {
 					min = distance;
-          p.associations[o.id] = l.id_i;
+					min_id = l.id_i;
 				}
 			}
+			p.associations.push_back(min_id);
 		}
 	}
 
@@ -140,6 +142,7 @@ void ParticleFilter::updateWeights(double sensor_range, double std_landmark[],
 	const double dy_divider = 2.0*pow(std_y,2);
 
  	vector<double> weights_;
+
 	// 2D Gaussian
 	for (auto& p:particles) {
     p.weight = 1;
@@ -165,7 +168,15 @@ void ParticleFilter::resample() {
 	// TODO: Resample particles with replacement with probability proportional to their weight. 
 	// NOTE: You may find std::discrete_distribution helpful here.
 	//   http://en.cppreference.com/w/cpp/numeric/random/discrete_distribution
-
+  random_device rd;
+	mt19937_64 gen(rd());
+	discrete_distribution<double> d(weights.begin(), weights.end());
+	map<int, int> m;
+	vector<Particle> new_particles;
+  for (auto i = 0; i < num_particles; i+=1) {
+		new_particles.push_back(particles[d(gen)]);
+	}
+  particles = new_particles;
 }
 
 Particle ParticleFilter::SetAssociations(Particle particle, std::vector<int> associations, std::vector<double> sense_x, std::vector<double> sense_y)

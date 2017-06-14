@@ -108,6 +108,7 @@ int main()
         	for(int i = 0; i < x_sense.size(); i++)
         	{
         		LandmarkObs obs;
+            obs.id = i;
         		obs.x = x_sense[i];
 				    obs.y = y_sense[i];
 				    noisy_observations.push_back(obs);
