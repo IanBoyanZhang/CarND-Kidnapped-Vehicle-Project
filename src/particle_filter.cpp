@@ -106,15 +106,30 @@ void ParticleFilter::updateWeights(double sensor_range, double std_landmark[],
 	// You would need to normalize the weights for calculations
 
 	// TODO: sensor_range for filtering
-	// Time complexity M (#_of_particles) * N (#_of_observations)
-	for (const auto& p: particles) {
-		for (const auto& l: map_landmarks.landmark_list) {
+	// Time complexity M (#_of_particles) * N (#_of_observations) * Q (#_of_landmarks)
+	for (auto& p: particles) {
+    for (const auto& o: observations) {
 			// Coordinate transform
 			//   http://planning.cs.uiuc.edu/node99.html
-      p.sense_x.push_back(l.x_f * cos(p.theta) - l.y_f * sin(p.theta) + p.x);
-			p.sense_y.push_back(l.x_f * sin(p.theta) + l.y_f * sin(p.theta) + p.y);
+			p.sense_x.push_back(o.x * cos(p.theta) - o.y * sin(p.theta) + p.x);
+			p.sense_y.push_back(o.x * sin(p.theta) + o.y * sin(p.theta) + p.y);
+			// associate landmark to this observation (chose the landmark with the shortest)
+			// distance to observation
+      // Factor below part into data association function?
+			double min = numeric_limits<double>::max();
+			double distance = 0;
+			for (const auto& l: map_landmarks.landmark_list) {
+				distance = dist(p.sense_x[o.id], p.sense_y[o.id], l.x_f, l.y_f);
+				if (distance < min) {
+					min = distance;
+          p.associations[o.id] = l.id_i;
+				}
+			}
 		}
 	}
+
+  // The calculate Multi-variate Gaussian probability (x, y) for each observation of
+	// particle
 
 	// calculate particle weight
 	const double std_x = std_landmark[0];
@@ -124,18 +139,25 @@ void ParticleFilter::updateWeights(double sensor_range, double std_landmark[],
 	const double dx_divider = 2.0*pow(std_x,2);
 	const double dy_divider = 2.0*pow(std_y,2);
 
-  vector<double> weights_;
+ 	vector<double> weights_;
 	// 2D Gaussian
 	for (auto& p:particles) {
     p.weight = 1;
 		for (const auto& map_obs:observations) {
-			const double dx2 = pow(map_obs.x - p.sense_x[map_obs.id], 2);
-			const double dy2 = pow(map_obs.y - p.sense_y[map_obs.id], 2);
+			const double dx2 = pow(p.sense_x[map_obs.id] - map_landmarks.landmark_list[p.associations[map_obs.id]].x_f ,2);
+			const double dy2 = pow(p.sense_y[map_obs.id] - map_landmarks.landmark_list[p.associations[map_obs.id]].y_f, 2);
 			p.weight *= scalar*exp(-(dx2/dx_divider + dy2/dy_divider));
 		}
 		weights_.push_back(p.weight);
 	}
 
+	// Summation
+  double sum_of_weights = accumulate(weights_.begin(), weights_.end(), 0.0);
+
+	// Normalization
+	for (auto& w:weights_) {
+		w/=sum_of_weights;
+	}
 	weights = weights_;
 }
 
