@@ -42,6 +42,7 @@ void ParticleFilter::init(double x, double y, double theta, double std[]) {
 		particle.theta = generateGaussianVariable(theta, std_theta);
 		particles.push_back(particle);
 	}
+	is_initialized = true;
 }
 
 void ParticleFilter::prediction(double delta_t, double std_pos[], double velocity, double yaw_rate) {
@@ -63,8 +64,9 @@ void ParticleFilter::prediction(double delta_t, double std_pos[], double velocit
 	double std_theta = std_pos[2];
 
 	// TODO: Add gaussian noise to velocity and yaw_rate
+	double threshold = 1e-4;
 	for (auto i = 0; i < num_particles; i+=1) {
-		if (yaw_rate == 0) {
+		if (yaw_rate < threshold) {
 			linearMotionParticleProgress(&particles[i], velocity, delta_t);
 			continue;
 		}
