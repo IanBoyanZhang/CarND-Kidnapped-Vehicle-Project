@@ -122,13 +122,14 @@ void ParticleFilter::updateWeights(double sensor_range, double std_landmark[],
 			double min_id = 0;
 			double distance = 0;
 			for (const auto& l: map_landmarks.landmark_list) {
-				/*distance = dist(p.sense_x[o.id], p.sense_y[o.id], l.x_f, l.y_f);*/
+				distance = dist(p.sense_x[o.id], p.sense_y[o.id], l.x_f, l.y_f);
 				if (distance < min) {
 					min = distance;
 					min_id = l.id_i;
 				}
 			}
 			p.associations.push_back(min_id);
+//      cout << p.associations[o.id] << endl;
 		}
 	}
 
