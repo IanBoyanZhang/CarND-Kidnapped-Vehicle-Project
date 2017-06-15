@@ -135,20 +135,21 @@ void ParticleFilter::updateWeights(double sensor_range, double std_landmark[],
 			// Observation obs in global/map coordinate
       // Factoring below code to data observation
 			double o_x_map = o.x * cos(p.theta) - o.y * sin(p.theta) + p.x;
-			double o_y_map = o.x * sin(p.theta) + o.y * sin(p.theta) + p.y;
+			double o_y_map = o.x * sin(p.theta) + o.y * cos(p.theta) + p.y;
 
 			// Filtering landmark
 			double min = numeric_limits<double>::max();
 			double distance = 0;
+			double distance_p_to_lm = 0;
       p.associations.push_back(-1);
 			p.sense_x.push_back(o_x_map);
 			p.sense_y.push_back(o_y_map);
 			for (const auto &lm: map_landmarks.landmark_list) {
 				distance = dist(o_x_map, o_y_map, lm.x_f, lm.y_f);
-				if (distance < sensor_range && distance < min) {
+				distance_p_to_lm = dist(p.x, p.y, lm.x_f, lm.y_f);
+				if (distance_p_to_lm < sensor_range && distance < min) {
 					min = distance;
 					p.associations[o.id] = lm.id_i;
-          cout << "lm id_i" << lm.id_i << endl;
           p.sense_x[o.id] = o_x_map;
 					p.sense_y[o.id] = o_y_map;
 				}
@@ -170,14 +171,14 @@ void ParticleFilter::updateWeights(double sensor_range, double std_landmark[],
  	vector<double> weights_;
 
   double inter = 0;
-	cout << "std_x:: " << std_x << endl;
-	cout << "std_y:: " << std_y << endl;
 	// 2D Gaussian
 	for (auto& p:particles) {
     p.weight = 1;
 		for (const auto& o:observations) {
-			const double dx2 = pow(p.sense_x[o.id] - map_landmarks.landmark_list[p.associations[o.id]].x_f ,2);
-			const double dy2 = pow(p.sense_y[o.id] - map_landmarks.landmark_list[p.associations[o.id]].y_f, 2);
+			const double dx2 = pow(p.sense_x[o.id] - map_landmarks.landmark_list[p.associations[o.id] - 1].x_f ,2);
+			//const double dx2 = pow(p.sense_x[o.id] - map_landmarks.landmark_list[p.associations[o.id]].x_f ,2);
+			const double dy2 = pow(p.sense_y[o.id] - map_landmarks.landmark_list[p.associations[o.id] - 1].y_f, 2);
+			//const double dy2 = pow(p.sense_y[o.id] - map_landmarks.landmark_list[p.associations[o.id]].y_f, 2);
 			cout << "dx2: " << dx2 << endl;
       cout << "dy2: " << dy2 << endl;
 
