@@ -6,6 +6,8 @@
 
 using namespace std;
 
+//#define DEBUG_MAP
+
 // for convenience
 using json = nlohmann::json;
 

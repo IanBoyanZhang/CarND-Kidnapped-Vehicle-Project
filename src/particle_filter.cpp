@@ -15,6 +15,7 @@
 #include <iterator>
 
 #include "particle_filter.h"
+#include "map.h"
 
 using namespace std;
 
@@ -89,6 +90,20 @@ void ParticleFilter::dataAssociation(std::vector<LandmarkObs> predicted, std::ve
 	// NOTE: this method will NOT be called by the grading code. But you will probably find it useful to 
 	//   implement this method and use it as a helper during the updateWeights phase.
 
+	// associate landmark to this observation (chose the landmark with the shortest)
+	// distance to observation
+	// Factor below part into data association function?
+	// By default associate with first landmark
+				// Filtering landmark range
+/*        if (distance >= sensor_range) {
+					continue;
+				}
+				if (distance < min) {
+					min = distance;
+					min_id = l.id_i;
+				}
+			}
+			p.associations.push_back(min_id);*/
 }
 
 void ParticleFilter::updateWeights(double sensor_range, double std_landmark[], 
@@ -109,27 +124,30 @@ void ParticleFilter::updateWeights(double sensor_range, double std_landmark[],
 	// TODO: sensor_range for filtering
 	// Time complexity M (#_of_particles) * N (#_of_observations) * Q (#_of_landmarks)
 	for (auto& p: particles) {
-    for (const auto& o: observations) {
+		for (const auto &o: observations) {
 			// Coordinate transform
 			//   http://planning.cs.uiuc.edu/node99.html
-			p.sense_x.push_back(o.x * cos(p.theta) - o.y * sin(p.theta) + p.x);
-			p.sense_y.push_back(o.x * sin(p.theta) + o.y * sin(p.theta) + p.y);
-			// associate landmark to this observation (chose the landmark with the shortest)
-			// distance to observation
-      // Factor below part into data association function?
+
+			// Observation obs in global/map coordinate
+      // Factoring below code to data observation
+			double o_x_map = o.x * cos(p.theta) - o.y * sin(p.theta) + p.x;
+			double o_y_map = o.x * sin(p.theta) + o.y * sin(p.theta) + p.y;
+
+			// Filtering landmark
 			double min = numeric_limits<double>::max();
-			// By default associate with first landmark
-			double min_id = 0;
 			double distance = 0;
-			for (const auto& l: map_landmarks.landmark_list) {
-				distance = dist(p.sense_x[o.id], p.sense_y[o.id], l.x_f, l.y_f);
-				if (distance < min) {
+      p.associations.push_back(-1);
+			p.sense_x.push_back(o_x_map);
+			p.sense_y.push_back(o_y_map);
+			for (const auto &lm: map_landmarks.landmark_list) {
+				distance = dist(o_x_map, o_y_map, lm.x_f, lm.y_f);
+				if (distance < sensor_range && distance < min) {
 					min = distance;
-					min_id = l.id_i;
+					p.associations[o.id] = lm.id_i;
+          p.sense_x[o.id] = o_x_map;
+					p.sense_y[o.id] = o_y_map;
 				}
 			}
-			p.associations.push_back(min_id);
-//      cout << p.associations[o.id] << endl;
 		}
 	}
 
@@ -149,9 +167,9 @@ void ParticleFilter::updateWeights(double sensor_range, double std_landmark[],
 	// 2D Gaussian
 	for (auto& p:particles) {
     p.weight = 1;
-		for (const auto& map_obs:observations) {
-			const double dx2 = pow(p.sense_x[map_obs.id] - map_landmarks.landmark_list[p.associations[map_obs.id]].x_f ,2);
-			const double dy2 = pow(p.sense_y[map_obs.id] - map_landmarks.landmark_list[p.associations[map_obs.id]].y_f, 2);
+		for (const auto& o:observations) {
+			const double dx2 = pow(p.sense_x[o.id] - map_landmarks.landmark_list[p.associations[o.id]].x_f ,2);
+			const double dy2 = pow(p.sense_y[o.id] - map_landmarks.landmark_list[p.associations[o.id]].y_f, 2);
 			p.weight *= scalar*exp(-(dx2/dx_divider + dy2/dy_divider));
 		}
 		weights_.push_back(p.weight);
@@ -159,6 +177,8 @@ void ParticleFilter::updateWeights(double sensor_range, double std_landmark[],
 
 	// Summation
   double sum_of_weights = accumulate(weights_.begin(), weights_.end(), 0.0);
+
+	cout << "sum_of_weights" << sum_of_weights << endl;
 
 	// Normalization
 	for (auto& w:weights_) {
