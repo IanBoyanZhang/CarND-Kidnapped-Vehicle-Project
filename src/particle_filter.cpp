@@ -25,7 +25,8 @@ void ParticleFilter::init(double x, double y, double theta, double std[]) {
 	// Add random Gaussian noise to each particle.
 	// NOTE: Consult particle_filter.h for more information about this method (and others in this file).
 
-	num_particles = 1000;
+	//num_particles = 1000;
+	num_particles = 1;
 	for (auto i = 0; i < num_particles; i+=1) {
 		weights.push_back(1);
 	}
@@ -124,6 +125,9 @@ void ParticleFilter::updateWeights(double sensor_range, double std_landmark[],
 	// TODO: sensor_range for filtering
 	// Time complexity M (#_of_particles) * N (#_of_observations) * Q (#_of_landmarks)
 	for (auto& p: particles) {
+    p.associations.clear();
+		p.sense_x.clear();
+		p.sense_y.clear();
 		for (const auto &o: observations) {
 			// Coordinate transform
 			//   http://planning.cs.uiuc.edu/node99.html
@@ -144,6 +148,7 @@ void ParticleFilter::updateWeights(double sensor_range, double std_landmark[],
 				if (distance < sensor_range && distance < min) {
 					min = distance;
 					p.associations[o.id] = lm.id_i;
+          cout << "lm id_i" << lm.id_i << endl;
           p.sense_x[o.id] = o_x_map;
 					p.sense_y[o.id] = o_y_map;
 				}
@@ -164,15 +169,24 @@ void ParticleFilter::updateWeights(double sensor_range, double std_landmark[],
 
  	vector<double> weights_;
 
+  double inter = 0;
+	cout << "std_x:: " << std_x << endl;
+	cout << "std_y:: " << std_y << endl;
 	// 2D Gaussian
 	for (auto& p:particles) {
     p.weight = 1;
 		for (const auto& o:observations) {
 			const double dx2 = pow(p.sense_x[o.id] - map_landmarks.landmark_list[p.associations[o.id]].x_f ,2);
 			const double dy2 = pow(p.sense_y[o.id] - map_landmarks.landmark_list[p.associations[o.id]].y_f, 2);
-			p.weight *= scalar*exp(-(dx2/dx_divider + dy2/dy_divider));
+			cout << "dx2: " << dx2 << endl;
+      cout << "dy2: " << dy2 << endl;
+
+			inter = scalar*exp(-(dx2/dx_divider + dy2/dy_divider));
+			cout << "intermediate: " << inter << endl;
+			p.weight *= inter;
 		}
 		weights_.push_back(p.weight);
+    cout << "P.weight: " << p.weight << endl;
 	}
 
 	// Summation
@@ -200,6 +214,7 @@ void ParticleFilter::resample() {
 		new_particles.push_back(particles[d(gen)]);
 	}
   particles = new_particles;
+	weights.clear();
 }
 
 Particle ParticleFilter::SetAssociations(Particle particle, std::vector<int> associations, std::vector<double> sense_x, std::vector<double> sense_y)
