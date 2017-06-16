@@ -111,6 +111,7 @@ void ParticleFilter::updateWeights(double sensor_range, double std_landmark[],
 	sense_y_.resize(observations.size());
 
 	weights.clear();
+
 	for (auto &p : particles) {
 		p.associations.clear();
 		p.associations.resize(observations.size());
@@ -120,8 +121,11 @@ void ParticleFilter::updateWeights(double sensor_range, double std_landmark[],
 
 		for (int i = 0; i < observations.size(); i +=1) {
 			double min_length = numeric_limits<double>::max();
+      // observation in car to observation in map
 			double x = cos(p.theta)*observations[i].x - sin(p.theta)*observations[i].y + p.x;
 			double y = sin(p.theta)*observations[i].x + cos(p.theta)*observations[i].y + p.y;
+
+      // Data association
 			for (auto &lm: map_landmarks.landmark_list){
 				double distance = dist(x, y, lm.x_f, lm.y_f);
 				double distance_2 = dist(p.x, p.y, lm.x_f, lm.y_f);
@@ -135,10 +139,7 @@ void ParticleFilter::updateWeights(double sensor_range, double std_landmark[],
 			}
 		}
 
-    // TODO: std::move?
-		p.sense_y = sense_y_;
-		p.sense_x = sense_x_;
-
+    // Calc total probability for each particle
 		double total_prob = 1.0;
 
     const double std_x = std_landmark[0];
@@ -155,7 +156,7 @@ void ParticleFilter::updateWeights(double sensor_range, double std_landmark[],
 
       const double dx2 = pow(lm_x - sense_x_[m], 2);
       const double dy2 = pow(lm_y - sense_y_[m], 2);
-			total_prob *= (1.0/(2.0*M_PI*std_x*std_y))* exp (-((dx2/(2*pow(std_x, 2))) + (dy2/(2*pow(std_y, 2)))));
+      total_prob *= scalar * exp (-(dx2/dx_divider + dy2/dy_divider));
 		}
 		p.weight = total_prob;
 		weights.push_back(total_prob);
