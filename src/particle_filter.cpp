@@ -25,8 +25,8 @@ void ParticleFilter::init(double x, double y, double theta, double std[]) {
 	// Add random Gaussian noise to each particle.
 	// NOTE: Consult particle_filter.h for more information about this method (and others in this file).
 
-	num_particles = 1000;
-	//num_particles = 1;
+	//num_particles = 1000;
+	num_particles = 1;
 	// Taking into account Gaussian Sensor Noise around initial heading estimation
 	double std_x = std[0];
 	double std_y = std[1];
@@ -41,6 +41,7 @@ void ParticleFilter::init(double x, double y, double theta, double std[]) {
 		particle.theta = generateGaussianVariable(theta, std_theta);
 		weights.push_back(1);
     particle.weight = 1;
+		particles.push_back(particle);
 	}
 	weights.resize(num_particles, 1.0);
 	is_initialized = true;
@@ -204,13 +205,12 @@ void ParticleFilter::resample() {
   random_device rd;
 	mt19937_64 gen(rd());
 	discrete_distribution<double> d(weights.begin(), weights.end());
-	map<int, int> m;
 	vector<Particle> new_particles;
   for (auto i = 0; i < num_particles; i+=1) {
-		new_particles.push_back(particles[d(gen)]);
+    auto index = d(gen);
+		new_particles.push_back(std::move(particles[index]));
 	}
-  particles = new_particles;
-	weights.clear();
+  particles = std::move(new_particles);
 }
 
 Particle ParticleFilter::SetAssociations(Particle particle, std::vector<int> associations, std::vector<double> sense_x, std::vector<double> sense_y)
