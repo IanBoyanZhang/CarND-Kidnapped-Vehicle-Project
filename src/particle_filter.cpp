@@ -66,9 +66,14 @@ void ParticleFilter::prediction(double delta_t, double std_pos[], double velocit
 	for (auto &p:particles){
 		//Add measurements using the physical Model
 		if (fabs(yaw_rate) < threshold){
-			linearMotionParticleProgress(&p, velocity, delta_t);
+
+			p.x = p.x + velocity * delta_t * cos(p.theta);
+			p.y = p.y + velocity * delta_t * sin(p.theta);
 		} else{
-			nonLinearMotionParticleProgress(&p, velocity, delta_t, yaw_rate);
+			double yaw_0 = p.theta;
+			p.theta = p.theta + yaw_rate * delta_t;
+			p.x = p.x + velocity / yaw_rate * (sin(p.theta) - sin(yaw_0));
+			p.y = p.y + velocity / yaw_rate * (cos(yaw_0) - cos(p.theta));
 		}
 
 		// Add Noise - creates a normal (Gaussian) distribution for x,y and theta
@@ -226,33 +231,5 @@ string ParticleFilter::getSenseY(Particle best)
 	string s = ss.str();
 	s = s.substr(0, s.length()-1);  // get rid of the trailing space
 	return s;
-}
-
-
-void ParticleFilter::linearMotionParticleProgress(Particle *particle, const double v, const double dt) {
-	double x_0 = particle->x;
-	double y_0 = particle->y;
-	double yaw_0 = particle->theta;
-
-	double x_f = x_0 + v * dt * cos(yaw_0);
-	double y_f = y_0 + v * dt * sin(yaw_0);
-
-	particle->x = x_f;
-	particle->y = y_f;
-}
-
-void ParticleFilter::nonLinearMotionParticleProgress(Particle *particle, const double v,
-																										 const double dt, const double yaw_rate) {
-	double x_0 = particle->x;
-	double y_0 = particle->y;
-	double yaw_0 = particle->theta;
-
-	double yaw_f = yaw_0 + yaw_rate * dt;
-	double x_f = x_0 + v / yaw_rate * (sin(yaw_f) - sin(yaw_0));
-	double y_f = y_0 + v / yaw_rate * (cos(yaw_0) - cos(yaw_f));
-
-	particle->x = x_f;
-	particle->y = y_f;
-	particle->theta = yaw_f;
 }
 
