@@ -121,11 +121,15 @@ void ParticleFilter::updateWeights(double sensor_range, double std_landmark[],
 
 		for (int i = 0; i < observations.size(); i +=1) {
 			double min_length = numeric_limits<double>::max();
-      // observation in car to observation in map
+      /*************************************************************
+       * Transform observation in car coord to observation in map coord
+       *************************************************************/
 			double x = cos(p.theta)*observations[i].x - sin(p.theta)*observations[i].y + p.x;
 			double y = sin(p.theta)*observations[i].x + cos(p.theta)*observations[i].y + p.y;
 
-      // Data association
+      /*************************************************************
+       * Data association
+       *************************************************************/
 			for (auto &lm: map_landmarks.landmark_list){
 				double distance = dist(x, y, lm.x_f, lm.y_f);
 				double distance_2 = dist(p.x, p.y, lm.x_f, lm.y_f);
@@ -139,7 +143,9 @@ void ParticleFilter::updateWeights(double sensor_range, double std_landmark[],
 			}
 		}
 
-    // Calc total probability for each particle
+    /*************************************************************
+     * Calc total probability for each particle
+     *************************************************************/
 		double total_prob = 1.0;
 
     const double std_x = std_landmark[0];
@@ -150,7 +156,6 @@ void ParticleFilter::updateWeights(double sensor_range, double std_landmark[],
     const double dy_divider = 2.0*pow(std_y,2);
 
 		for (int m =0; m < observations.size();m++){
-
 			const double lm_x = map_landmarks.landmark_list[p.associations[m]].x_f;
 			const double lm_y = map_landmarks.landmark_list[p.associations[m]].y_f;
 
@@ -174,7 +179,7 @@ void ParticleFilter::resample() {
 		auto index = d(gen3);
 		new_particles.push_back(std::move(particles[index]));
 	}
-	//assign the particles from holder to the original
+	// Assign the particles from holder to the original
 	particles = std::move(new_particles);
 
 }
@@ -253,3 +258,4 @@ void ParticleFilter::nonLinearMotionParticleProgress(Particle *particle, const d
 	particle->y = y_f;
 	particle->theta = yaw_f;
 }
+
