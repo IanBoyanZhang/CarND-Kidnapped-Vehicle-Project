@@ -136,3 +136,7 @@ The things the grading code is looking for are:
 ## Notes 
 
 [C++ Back inserter](http://www.cplusplus.com/reference/iterator/back_inserter/)
+
+[Implementing data association](https://discussions.udacity.com/t/implementing-data-association/243745)
+
+[A good way to get high precision values when multiplying Gaussian probabilities](https://discussions.udacity.com/t/a-good-way-to-get-high-precision-values-when-multiplying-gaussian-probabilities/246751/2)
