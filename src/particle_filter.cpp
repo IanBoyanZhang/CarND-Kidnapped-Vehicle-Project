@@ -64,9 +64,6 @@ void ParticleFilter::prediction(double delta_t, double std_pos[], double velocit
 	double threshold = 1e-5;
 
 	for (auto &p:particles){
-		double x = p.x;
-		double y = p.y;
-		double theta = p.theta;
 		//Add measurements using the physical Model
 		if (fabs(yaw_rate) < threshold){
 			linearMotionParticleProgress(&p, velocity, delta_t);
