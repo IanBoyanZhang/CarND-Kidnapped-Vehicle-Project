@@ -25,11 +25,8 @@ void ParticleFilter::init(double x, double y, double theta, double std[]) {
 	// Add random Gaussian noise to each particle.
 	// NOTE: Consult particle_filter.h for more information about this method (and others in this file).
 
-	//num_particles = 1000;
-	num_particles = 1;
-	for (auto i = 0; i < num_particles; i+=1) {
-		weights.push_back(1);
-	}
+	num_particles = 1000;
+	//num_particles = 1;
 	// Taking into account Gaussian Sensor Noise around initial heading estimation
 	double std_x = std[0];
 	double std_y = std[1];
@@ -42,8 +39,10 @@ void ParticleFilter::init(double x, double y, double theta, double std[]) {
 		particle.x = generateGaussianVariable(x, std_x);
 		particle.y = generateGaussianVariable(y, std_y);
 		particle.theta = generateGaussianVariable(theta, std_theta);
-		particles.push_back(particle);
+		weights.push_back(1);
+    particle.weight = 1;
 	}
+	weights.resize(num_particles, 1.0);
 	is_initialized = true;
 }
 
@@ -75,13 +74,10 @@ void ParticleFilter::prediction(double delta_t, double std_pos[], double velocit
 		nonLinearMotionParticleProgress(&particles[i], velocity, delta_t, yaw_rate);
 	}
 
-	for (auto i = 0; i < num_particles; i+=1) {
-		Particle particle = particles[i];
-		particle.id = i;
-		particle.x = generateGaussianVariable(particle.x, std_x);
-		particle.y = generateGaussianVariable(particle.y, std_y);
-		particle.theta = generateGaussianVariable(particle.theta, std_theta);
-		particles[i] = particle;
+	for (auto &p:particles) {
+		p.x = generateGaussianVariable(p.x, std_x);
+		p.y = generateGaussianVariable(p.y, std_y);
+		p.theta = generateGaussianVariable(p.theta, std_theta);
 	}
 }
 
@@ -122,6 +118,7 @@ void ParticleFilter::updateWeights(double sensor_range, double std_landmark[],
 
 	// You would need to normalize the weights for calculations
 
+  weights.clear();
 	// TODO: sensor_range for filtering
 	// Time complexity M (#_of_particles) * N (#_of_observations) * Q (#_of_landmarks)
 	for (auto& p: particles) {
@@ -168,17 +165,15 @@ void ParticleFilter::updateWeights(double sensor_range, double std_landmark[],
 	const double dx_divider = 2.0*pow(std_x,2);
 	const double dy_divider = 2.0*pow(std_y,2);
 
- 	vector<double> weights_;
-
   double inter = 0;
 	// 2D Gaussian
 	for (auto& p:particles) {
     p.weight = 1;
 		for (const auto& o:observations) {
-			const double dx2 = pow(p.sense_x[o.id] - map_landmarks.landmark_list[p.associations[o.id] - 1].x_f ,2);
-			//const double dx2 = pow(p.sense_x[o.id] - map_landmarks.landmark_list[p.associations[o.id]].x_f ,2);
-			const double dy2 = pow(p.sense_y[o.id] - map_landmarks.landmark_list[p.associations[o.id] - 1].y_f, 2);
-			//const double dy2 = pow(p.sense_y[o.id] - map_landmarks.landmark_list[p.associations[o.id]].y_f, 2);
+			//const double dx2 = pow(p.sense_x[o.id] - map_landmarks.landmark_list[p.associations[o.id] - 1].x_f ,2);
+			const double dx2 = pow(p.sense_x[o.id] - map_landmarks.landmark_list[p.associations[o.id]].x_f ,2);
+			//const double dy2 = pow(p.sense_y[o.id] - map_landmarks.landmark_list[p.associations[o.id] - 1].y_f, 2);
+			const double dy2 = pow(p.sense_y[o.id] - map_landmarks.landmark_list[p.associations[o.id]].y_f, 2);
 			cout << "dx2: " << dx2 << endl;
       cout << "dy2: " << dy2 << endl;
 
@@ -186,20 +181,20 @@ void ParticleFilter::updateWeights(double sensor_range, double std_landmark[],
 			cout << "intermediate: " << inter << endl;
 			p.weight *= inter;
 		}
-		weights_.push_back(p.weight);
+		weights.push_back(p.weight);
     cout << "P.weight: " << p.weight << endl;
 	}
 
 	// Summation
-  double sum_of_weights = accumulate(weights_.begin(), weights_.end(), 0.0);
+  double sum_of_weights = accumulate(weights.begin(), weights.end(), 0.0);
 
 	cout << "sum_of_weights" << sum_of_weights << endl;
 
 	// Normalization
-	for (auto& w:weights_) {
+	for (auto& w:weights) {
 		w/=sum_of_weights;
 	}
-	weights = weights_;
+	weights = weights;
 }
 
 void ParticleFilter::resample() {
